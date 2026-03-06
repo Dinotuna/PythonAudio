@@ -8,9 +8,10 @@ import scipy.io.wavfile as wav
 def main():
     
 
-    # sine1 = sine_tone(300, 2, 0.6)
+    # my_sound = sine_tone(300, 3, 0.6)
     # square_wave1 = square_wave(300, 2, 0.6)
-    # sawtooth_wave1 = sawtooth_wave(300, 2, 0.6)
+    # my_sound = sawtooth_wave(300, 2, 0.6)
+    # my_sound = white_noise(duration=3.0)
 
     my_modulator = sawtooth_wave(20,3,)
 
@@ -20,8 +21,11 @@ def main():
     my_sound = fm_synthesis(100, my_sound)
 
 
+    my_sound = iir_filter(my_sound)
 
-    my_sound = apply_envelope(my_sound, [1.0, 0.4, 0.7, 1])
+    # my_sound = apply_envelope(my_sound, [1.0, 0.4, 0.7, 1])
+
+
     wav.write("audio.wav", 44100, my_sound)
 
 
@@ -85,18 +89,18 @@ def sawtooth_wave(
 
     return sawtooth_wave
 
-# def white_noise(
-#         duration: float=1.0,
-#         amplitude: float=0.5,
-#         sample_rate: int=44100
-# ) -> np.ndarray:
+def white_noise(
+        duration: float=3.0,
+        amplitude: float=0.5,
+        sample_rate: int=44100
+) -> np.ndarray:
     
-#     n_samples = int(duration * sample_rate)
+    n_samples = int(duration * sample_rate)
 
-#     noise = np.random.uniform(-1, 1, n_samples)
+    noise = np.random.uniform(-1, 1, n_samples)
 
-#     noise *= amplitude
-#     return noise
+    noise *= amplitude
+    return noise
 
 def apply_envelope(sound: np.array, adsr:list, sample_rate: int=44100) -> np.array:
      
@@ -172,6 +176,23 @@ def fm_synthesis(
     fm_wave = amplitude * (fm_wave / max_amplitude)
 
     return fm_wave  
+
+def fir_filter(signal_in = np.array, cutoff_freq: float=220.0,numtaps: float=101, sample_rate: int=44100,):
+
+    fir_coeffs = signal.firwin(numtaps, cutoff_freq, fs=sample_rate, pass_zero="lowpass")
+    
+    firfiltered_signal = signal.lfilter(fir_coeffs, [1.0], signal_in)
+
+    return firfiltered_signal
+
+def iir_filter(signal_in=np.array, cutoff_freq: float=220.0, order: int=3, sample_rate: int=44100):
+
+    b, a = signal.iirfilter(order, cutoff_freq, btype="lowpass", ftype="butter", output="ba", fs=sample_rate)
+
+    iirfiltered_signal = signal.lfilter(b, a, signal_in)
+
+    return iirfiltered_signal
+
 
 if __name__ == "__main__":
     main()
